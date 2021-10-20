@@ -16,6 +16,7 @@ import scala.util.matching.Regex
 import org.apache.hadoop.io.WritableComparable
 import org.apache.hadoop.io.WritableComparator
 import math.Ordering.Implicits.infixOrderingOps
+import org.apache.hadoop.fs.FileSystem
 
 package object WordCountAnalytics {
 
@@ -39,6 +40,7 @@ package object WordCountAnalytics {
         val words = line.split(" ")
         for(word <- words){
           if(word == config.getString("wordCount.logType.error") || word == config.getString("wordCount.logType.info") || word == config.getString("wordCount.logType.warn") || word == config.getString("wordCount.logType.debug")){
+            //We're converting the string timestamp into an integer representing the number of seconds in the line below
             val intervalGroup = (Integer.parseInt(words(0).substring(0,2)) * 3600 + Integer.parseInt(words(0).substring(3,5)) * 60 + Integer.parseInt(words(0).substring(6,8))) / config.getInt("wordCount.interval")
             val str = intervalGroup.toString + " " + word
             context.write(new Text(str), one)
@@ -66,6 +68,7 @@ package object WordCountAnalytics {
     override def map(key: Object, value: Text, context: Mapper[Object, Text, Text, IntWritable]#Context): Unit = {
       val newKey = value.toString.split(" ")
       val sum = newKey(1).toString.split(",")
+      // We're performing the operation below to construct a timestamp which applies to every log in the same group
       val timestamp = (Integer.parseInt(newKey(0).toString) * config.getInt("wordCount.interval") / 3600).toInt.toString + ":" + ((Integer.parseInt(newKey(0).toString) * config.getInt("wordCount.interval") / 60).toInt % 60).toString + ":" + (Integer.parseInt(newKey(0).toString) * config.getInt("wordCount.interval") % 60).toString
       context.write(new Text(timestamp + "  " + sum(0).toString), new IntWritable(sum(1).toString.toInt))
     }
@@ -82,7 +85,7 @@ package object WordCountAnalytics {
     override def compare(a: WritableComparable[_], b: WritableComparable[_]): Int = {
       val val1 = a.asInstanceOf[IntWritable]
       val val2 = b.asInstanceOf[IntWritable]
-      -1 * val1.compareTo(val2)
+      val2.compareTo(val1)
     }
   }
 
@@ -140,7 +143,7 @@ package object WordCountAnalytics {
   class Task2Reducer2 extends Reducer[IntWritable,Text,IntWritable,Text] {
 
     override def reduce(key: IntWritable, values: Iterable[Text], context: Reducer[IntWritable, Text, IntWritable, Text]#Context): Unit = {
-      values.forEach(text => {context.write(key, text)})
+      values.asScala.foreach(value => context.write(key, value))
     }
   }
 
@@ -179,8 +182,8 @@ package object WordCountAnalytics {
   }
 
   /* Mappers and Reducers for the fourth task. The logic involves a similar logic to Task 3 with the difference arising
-     the fact that in the reducer, we find the max count of each log level in a timestamp compared with all other
-     timestamps*/
+     the fact that in the reducer, we find the max length of injected regex string for each log level compared with all
+     other timestamps*/
 
   class Task4Mapper extends Mapper[Object, Text, Text, IntWritable] {
 
@@ -217,8 +220,13 @@ package object WordCountAnalytics {
 
     logger.info(" Starting Job 1 for Task 1 :")
     val task1configuration1 = new Configuration
+
+    val fs1 = FileSystem.get(task1configuration1)
+    if (fs1.exists(new Path(args(1))))
+      fs1.delete(new Path(args(1)), true)
+
     task1configuration1.set("mapred.textoutputformat.separator", ",")
-    val task1job1 = Job.getInstance(task1configuration1,"Time Interval Distribution")
+    val task1job1 = Job.getInstance(task1configuration1)
     task1job1.setJarByClass(this.getClass)
     task1job1.setMapperClass(classOf[Task1Mapper1])
     task1job1.setCombinerClass(classOf[Task1Reducer1])
@@ -234,8 +242,13 @@ package object WordCountAnalytics {
 
     logger.info(" Starting Job 2 for Task 2 :")
     val task1configuration2 = new Configuration
+
+    val fs2 = FileSystem.get(task1configuration2)
+    if (fs2.exists(new Path(args(2))))
+      fs2.delete(new Path(args(2)), true)
+
     task1configuration2.set("mapred.textoutputformat.separator", ",")
-    val task1job2 = Job.getInstance(task1configuration2,"Time Interval Distribution")
+    val task1job2 = Job.getInstance(task1configuration2)
     task1job2.setJarByClass(this.getClass)
     task1job2.setMapperClass(classOf[Task1Mapper2])
     task1job2.setCombinerClass(classOf[Task1Reducer2])
@@ -251,8 +264,13 @@ package object WordCountAnalytics {
 
     logger.info(" Starting Job 1 for Task 2 :")
     val task2configuration1 = new Configuration
+
+    val fs3 = FileSystem.get(task2configuration1)
+    if (fs3.exists(new Path(args(3))))
+      fs3.delete(new Path(args(3)), true)
+
     task2configuration1.set("mapred.textoutputformat.separator", ",")
-    val task2job1 = Job.getInstance(task2configuration1,"Time Interval Distribution")
+    val task2job1 = Job.getInstance(task2configuration1)
     task2job1.setJarByClass(this.getClass)
     task2job1.setMapperClass(classOf[Task2Mapper1])
     task2job1.setCombinerClass(classOf[Task2Reducer1])
@@ -268,8 +286,13 @@ package object WordCountAnalytics {
 
     logger.info(" Starting Job 2 for Task 2 :")
     val task2configuration2 = new Configuration
+
+    val fs4 = FileSystem.get(task2configuration2)
+    if (fs4.exists(new Path(args(4))))
+      fs4.delete(new Path(args(4)), true)
+
     task2configuration2.set("mapred.textoutputformat.separator", ",")
-    val task2job2 = Job.getInstance(task2configuration2,"Time Interval Distribution")
+    val task2job2 = Job.getInstance(task2configuration2)
     task2job2.setJarByClass(this.getClass)
     task2job2.setMapperClass(classOf[Task2Mapper2])
     task2job2.setReducerClass(classOf[Task2Reducer2])
@@ -285,8 +308,13 @@ package object WordCountAnalytics {
 
     logger.info(" Starting Job for Task 3 :")
     val task3configuration = new Configuration
+
+    val fs5 = FileSystem.get(task3configuration)
+    if (fs5.exists(new Path(args(5))))
+      fs5.delete(new Path(args(5)), true)
+
     task3configuration.set("mapred.textoutputformat.separator", ",")
-    val task3job = Job.getInstance(task3configuration,"Time Interval Distribution")
+    val task3job = Job.getInstance(task3configuration)
     task3job.setJarByClass(this.getClass)
     task3job.setMapperClass(classOf[Task3Mapper])
     task3job.setCombinerClass(classOf[Task3Reducer])
@@ -302,8 +330,13 @@ package object WordCountAnalytics {
 
     logger.info(" Starting Job for Task 4 :")
     val task4configuration = new Configuration
+
+    val fs6 = FileSystem.get(task4configuration)
+    if (fs6.exists(new Path(args(6))))
+      fs6.delete(new Path(args(6)), true)
+
     task4configuration.set("mapred.textoutputformat.separator", ",")
-    val task4job = Job.getInstance(task4configuration,"Time Interval Distribution")
+    val task4job = Job.getInstance(task4configuration)
     task4job.setJarByClass(this.getClass)
     task4job.setMapperClass(classOf[Task4Mapper])
     task4job.setCombinerClass(classOf[Task4Reducer])
@@ -314,6 +347,7 @@ package object WordCountAnalytics {
     task4job.setNumReduceTasks(1)
     FileInputFormat.addInputPath(task4job, new Path(args(0)))
     FileOutputFormat.setOutputPath(task4job, new Path(args(6)))
+    task4job.waitForCompletion(true)
     logger.info(" Job for Task 4 has ended")
 
     logger.info(" All tasks have ended. Exiting")

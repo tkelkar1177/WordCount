@@ -1,6 +1,24 @@
-Goal 1:
-The first mapreduce in this project takes the log file and performs string matching across each word and compares it
-with the given log message types (ERROR, INFO,DEBUG,WARN) and for each match it sends the message type as a key and
-an IntWritable object which has the value 1 and stores such pairs. The reducer takes key value pair multisets and adds
+Task 1:
+The goal of this task is to take the log file as a string, parse the timestamps and group the logs according to the
+timestamp normalized to a value that is a function of the time interval given. The sum of every log level across all
+time intervals is calculated and the final output is the count of each log level appended to the time interval. For
+this, we are utilizing two mappers and 2 reducers.
+
+Task 2:
+The goal of this task is to take the log file as a string and form groups as per a given interval as in the task above,
+but only for the log level "ERROR". Further, we sort the intervals in the descending order of the total number of
+"ERROR" logs in each interval. For this, we write a class extending the WritableComparator class where we compare keys
+and return either {0, 1, -1} depending on the comparison. This class is passed as a parameter to the setSortComparatorClass
+function, which runs the 'compare' function to sort the keys.
+
+Task 3:
+The goal of this task is for the mapper to take the log file and perform string matching across each word and compare it
+with the given log message types (ERROR, INFO,DEBUG,WARN) and for each match, send the message type as a key and
+an IntWritable object which has the value 1 and store such pairs. The reducer takes key value pair multisets and adds
 the total number of instances of each message type and stores the total sum for each instance in a csv file as the
 output.
+
+Task 4:
+The goal of this task is to find the maximum length of injected regex string log level overall across all time intervals
+for each log level. This is done with a similar mapper as in Task 3 but we instead pass the length of the regex string
+for each log and in the reducer, we iterate over every value to find the max length.
