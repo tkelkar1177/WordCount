@@ -10,6 +10,7 @@ out/
 *.iml
 *.ipr
 *.iws
+*.txt
 .idea
 modules.xml
 .idea/misc.xml
