@@ -11,5 +11,5 @@ The following steps detail the key points of this project:
 2. The LogFileGenerator project is run to obtain our input text file with the logs that we want to run our mapreduce on.
 3. We create a bucket in S3 within which we create our input folder.
 4. We upload our custom jar and log file to our input folder in S3
-5. We spin up a cluster passing our jar name, jar path, input and required output folder paths. We also provide a security key which was obtained while creating an EC2 instance.      We also specify the instance type that we want along with the master and core nodes.
+5. We spin up a cluster passing our jar name, jar path, input and required output folder paths. We also provide a security key which was obtained while creating an EC2 instance.      We also specify the instance type that we want along with the number of master and core nodes.
 6. We spin up our cluster, which runs our mapreduce program and persists the output files in the output paths that we had specified.
