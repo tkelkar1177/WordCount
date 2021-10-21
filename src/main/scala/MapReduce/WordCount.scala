@@ -14,7 +14,7 @@ import org.apache.hadoop.mapreduce.{Job, Mapper, Reducer}
 import scala.collection.JavaConverters._
 import scala.util.matching.Regex
 
-package object WordCount {
+package object WordCountAnalytics {
 
   class TypeCounter extends Mapper[Object, Text, Text, IntWritable] {
 
@@ -49,19 +49,17 @@ package object WordCount {
     val message = new Text()
 
     override def map(key: Object, value: Text, context: Mapper[Object, Text, Text, IntWritable]#Context): Unit = {
-      val text = new StringTokenizer(value.toString, "\n")
-      val token = text.nextToken()
-      System.out.println(token.toString)
-      val lines = token.split("\n")
+      val text = value.toString.split("\n")
+      System.out.println(text)
       var str = ""
-      for(line <- lines){
+      for(line <- text){
         val words = line.split(" ")
         for(word <- words){
-          if(str == config.getString("wordCount.logType.error") || str == config.getString("wordCount.logType.info") || str == config.getString("wordCount.logType.warn") || str == config.getString("wordCount.logType.debug")){
+          if(word == config.getString("wordCount.logType.error") || word == config.getString("wordCount.logType.info") || word == config.getString("wordCount.logType.warn") || word == config.getString("wordCount.logType.debug")){
             str = str + words(0) + " " + word + " " + words(words.length - 1) + "\n"
           }
         }
-        if((lines.indexOf(line) + 1) % 10 == 0){
+        if((text.indexOf(line) + 1) % 10 == 0){
           System.out.println(str)
           message.set(str)
           context.write(message, one)
@@ -82,18 +80,16 @@ package object WordCount {
     val message = new Text()
 
     override def map(key: Object, value: Text, context: Mapper[Object, Text, Text, IntWritable]#Context): Unit = {
-      val text = new StringTokenizer(value.toString, "\n")
-      val token = text.nextToken()
-      val lines = token.split("\n")
+      val text = value.toString.split(("\n"))
       var str = ""
-      for(line <- lines){
+      for(line <- text){
         val words = line.split(" ")
         for(word <- words){
           if(word == config.getString("wordCount.logType.error")){
             str = str + words(0) + " " + word + " " + words(words.length - 1) + "\n"
           }
         }
-        if((lines.indexOf(line) + 1) % 10 == 0){
+        if((text.indexOf(line) + 1) % 10 == 0){
           System.out.println(str)
           message.set(str)
           context.write(message, one)
@@ -155,6 +151,7 @@ package object WordCount {
     job2.setOutputKeyClass(classOf[Text])
     job2.setOutputKeyClass(classOf[Text]);
     job2.setOutputValueClass(classOf[IntWritable]);
+    job2.setNumReduceTasks(1)
     FileInputFormat.addInputPath(job2, new Path(args(0)))
     FileOutputFormat.setOutputPath(job2, new Path(args(2)))
     job2.waitForCompletion(true)
@@ -170,6 +167,7 @@ package object WordCount {
     job3.setOutputKeyClass(classOf[Text])
     job3.setOutputKeyClass(classOf[Text]);
     job3.setOutputValueClass(classOf[IntWritable]);
+    job3.setNumReduceTasks(1)
     FileInputFormat.addInputPath(job3, new Path(args(0)))
     FileOutputFormat.setOutputPath(job3, new Path(args(3)))
     job3.waitForCompletion(true)
