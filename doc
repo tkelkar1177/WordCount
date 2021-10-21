@@ -1,0 +1,6 @@
+Goal 1:
+The first mapreduce in this project takes the log file and performs string matching across each word and compares it
+with the given log message types (ERROR, INFO,DEBUG,WARN) and for each match it sends the message type as a key and
+an IntWritable object which has the value 1 and stores such pairs. The reducer takes key value pair multisets and adds
+the total number of instances of each message type and stores the total sum for each instance in a csv file as the
+output.
